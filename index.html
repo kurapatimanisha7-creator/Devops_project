@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jenkins CI/CD Demo</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <main class="container">
+        <h1>CI/CD pipeline automation using jenkins</h1>
+
+        <p class="description">
+            This website is automatically checked and deployed by Jenkins.
+        </p>
+
+        <div class="card">
+            <h2>Project Status</h2>
+
+            <p id="statusMessage">
+                Click the button to test JavaScript.
+            </p>
+
+            <button onclick="showStatus()">
+                Test Application
+            </button>
+        </div>
+
+        <p class="version">
+            Version: <span id="version">1.0.0</span>
+        </p>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>

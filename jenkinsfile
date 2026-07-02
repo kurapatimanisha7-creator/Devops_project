@@ -1,0 +1,116 @@
+pipeline {
+
+    agent any
+
+    options {
+        timestamps()
+    }
+
+    stages {
+
+        stage('Checkout Source Code') {
+            steps {
+                echo 'Downloading the latest project code from GitHub...'
+                checkout scm
+
+                bat 'dir'
+            }
+        }
+
+        stage('Validate Website Files') {
+            steps {
+                powershell '''
+                    Write-Host "Checking required files..."
+
+                    $requiredFiles = @(
+                        "index.html",
+                        "style.css",
+                        "script.js"
+                    )
+
+                    foreach ($file in $requiredFiles) {
+                        if (-not (Test-Path $file)) {
+                            Write-Error "Required file is missing: $file"
+                            exit 1
+                        }
+
+                        Write-Host "Found: $file"
+                    }
+
+                    $htmlContent = Get-Content "index.html" -Raw
+
+                    if ($htmlContent -notmatch "<html") {
+                        Write-Error "index.html does not appear to be a valid HTML file."
+                        exit 1
+                    }
+
+                    Write-Host "Website validation completed successfully."
+                '''
+            }
+        }
+
+        stage('Build Project') {
+            steps {
+                powershell '''
+                    Write-Host "Creating build folder..."
+
+                    $buildFolder = "$env:WORKSPACE\\build"
+
+                    if (Test-Path $buildFolder) {
+                        Remove-Item -Path $buildFolder -Recurse -Force
+                    }
+
+                    New-Item -ItemType Directory -Path $buildFolder | Out-Null
+
+                    Copy-Item "index.html" -Destination $buildFolder
+                    Copy-Item "style.css" -Destination $buildFolder
+                    Copy-Item "script.js" -Destination $buildFolder
+
+                    Write-Host "Build completed. Files created in:"
+                    Write-Host $buildFolder
+
+                    Get-ChildItem $buildFolder
+                '''
+            }
+        }
+
+        stage('Deploy Website') {
+            steps {
+                powershell '''
+                    Write-Host "Deploying website..."
+
+                    $buildFolder = "$env:WORKSPACE\\build"
+                    $deployFolder = "C:\\JenkinsDeploy\\JenkinsDemo"
+
+                    if (Test-Path $deployFolder) {
+                        Remove-Item -Path $deployFolder -Recurse -Force
+                    }
+
+                    New-Item -ItemType Directory -Path $deployFolder -Force | Out-Null
+
+                    Copy-Item "$buildFolder\\*" -Destination $deployFolder -Recurse -Force
+
+                    Write-Host "Deployment completed successfully."
+                    Write-Host "Deployment location: $deployFolder"
+
+                    Get-ChildItem $deployFolder
+                '''
+            }
+        }
+    }
+
+    post {
+
+        success {
+            echo 'SUCCESS: Website was validated, built, and deployed.'
+        }
+
+        failure {
+            echo 'FAILED: Please check the Jenkins Console Output.'
+        }
+
+        always {
+            echo 'Pipeline execution finished.'
+        }
+    }
+}
